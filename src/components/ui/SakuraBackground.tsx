@@ -9,6 +9,8 @@ type Petal = {
   duration: number;
   delay: number;
   drift: number;
+  swayDuration: number;
+  spinDuration: number;
   opacity: number;
   color: string;
 };
@@ -24,12 +26,13 @@ function createPetal(id: number): Petal {
     duration: 8 + Math.random() * 10,
     delay: Math.random() * -18,
     drift: -30 + Math.random() * 60,
+    swayDuration: 3 + Math.random() * 2,
+    spinDuration: 4 + Math.random() * 4,
     opacity: 0.5 + Math.random() * 0.35,
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
   };
 }
 
-// 桜の花びらSVGパス（先端にくぼみ）
 function PetalSvg({ color, size }: { color: string; size: number }) {
   return (
     <svg width={size} height={size * 1.3} viewBox="0 0 30 40">
@@ -58,16 +61,18 @@ export function SakuraBackground() {
       {petals.map((petal) => (
         <div
           key={petal.id}
-          className="absolute animate-[fall_linear_infinite]"
+          className="absolute"
           style={{
             left: `${petal.left}%`,
             opacity: petal.opacity,
+            // CSS変数で花びらごとのdriftを渡す
+            "--petal-drift": `${petal.drift}px`,
             animation: `fall ${petal.duration}s linear ${petal.delay}s infinite`,
-          }}
+          } as React.CSSProperties}
         >
           <div
             style={{
-              animation: `sway ${3 + Math.random() * 2}s ease-in-out ${petal.delay}s infinite alternate, spin ${4 + Math.random() * 4}s linear ${petal.delay}s infinite`,
+              animation: `sway ${petal.swayDuration}s ease-in-out ${petal.delay}s infinite alternate, spin ${petal.spinDuration}s linear ${petal.delay}s infinite`,
             }}
           >
             <PetalSvg color={petal.color} size={petal.size} />
@@ -81,7 +86,7 @@ export function SakuraBackground() {
             transform: translateY(-5vh) translateX(0px);
           }
           100% {
-            transform: translateY(105vh) translateX(${50}px);
+            transform: translateY(105vh) translateX(var(--petal-drift, 0px));
           }
         }
         @keyframes sway {
