@@ -41,6 +41,7 @@ export function NavLinks() {
 
       {/* Mobile hamburger button */}
       <button
+        type="button"
         className="md:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5"
         onClick={() => setIsOpen(!isOpen)}
         aria-label={isOpen ? "メニューを閉じる" : "メニューを開く"}

@@ -1,3 +1,5 @@
+export type { JoinFormData } from "@/lib/validations";
+
 export type Member = {
   id: string;
   name: string;
@@ -11,12 +13,4 @@ export type Member = {
 export type NavItem = {
   href: string;
   label: string;
-};
-
-export type JoinFormData = {
-  name: string;
-  email: string;
-  year: string;
-  department: string;
-  message?: string;
 };

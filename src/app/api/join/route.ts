@@ -15,9 +15,18 @@ function escapeHtml(str: string): string {
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_MAP_MAX_SIZE = 10_000;
+
+function pruneExpiredEntries(now: number) {
+  if (rateLimitMap.size <= RATE_LIMIT_MAP_MAX_SIZE) return;
+  for (const [key, entry] of rateLimitMap) {
+    if (now > entry.resetAt) rateLimitMap.delete(key);
+  }
+}
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
+  pruneExpiredEntries(now);
   const entry = rateLimitMap.get(ip);
 
   if (!entry || now > entry.resetAt) {

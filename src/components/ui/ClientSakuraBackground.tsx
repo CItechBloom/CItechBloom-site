@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-// tsParticlesはブラウザAPIが必要なためSSRを無効化
+// CSSアニメーションがwindowサイズに依存するためSSRを無効化
 const SakuraBackground = dynamic(
   () =>
     import("@/components/ui/SakuraBackground").then(
