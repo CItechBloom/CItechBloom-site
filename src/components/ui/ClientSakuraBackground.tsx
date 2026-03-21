@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-// CSSアニメーションがwindowサイズに依存するためSSRを無効化
+// Math.random()による花びら生成はSSRとクライアントで値が異なるためSSRを無効化
 const SakuraBackground = dynamic(
   () =>
     import("@/components/ui/SakuraBackground").then(

@@ -84,7 +84,7 @@ export async function POST(request: Request) {
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   const { error } = await resend.emails.send({
-    from: "CITechBloom <noreply@citechbloom.example.com>",
+    from: process.env.RESEND_FROM_EMAIL ?? "CITechBloom <noreply@citechbloom.example.com>",
     to: email,
     subject: "【CITechBloom】入会申請を受け付けました",
     html: `
