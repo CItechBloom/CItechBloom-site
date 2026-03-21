@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 type Petal = {
   id: number;
@@ -45,13 +45,11 @@ function PetalSvg({ color, size }: { color: string; size: number }) {
 }
 
 export function SakuraBackground() {
-  const [petals, setPetals] = useState<Petal[]>([]);
-
-  useEffect(() => {
-    setPetals(Array.from({ length: PETAL_COUNT }, (_, i) => createPetal(i)));
-  }, []);
-
-  if (petals.length === 0) return null;
+  // SSR無効(ClientSakuraBackground経由)のためクライアントでのみ実行される
+  const petals = useMemo(
+    () => Array.from({ length: PETAL_COUNT }, (_, i) => createPetal(i)),
+    []
+  );
 
   return (
     <div

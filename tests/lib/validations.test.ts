@@ -16,7 +16,8 @@ describe("JoinFormSchema", () => {
   });
 
   it("messageが省略可能", () => {
-    const { message: _message, ...withoutMessage } = validData;
+    const { name, email, year, department } = validData;
+    const withoutMessage = { name, email, year, department };
     const result = JoinFormSchema.safeParse(withoutMessage);
     expect(result.success).toBe(true);
   });
