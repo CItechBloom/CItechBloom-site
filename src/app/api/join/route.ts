@@ -19,9 +19,12 @@ const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_MAP_MAX_SIZE = 10_000;
 
 function pruneExpiredEntries(now: number) {
-  if (rateLimitMap.size <= RATE_LIMIT_MAP_MAX_SIZE) return;
   for (const [key, entry] of rateLimitMap) {
     if (now > entry.resetAt) rateLimitMap.delete(key);
+  }
+  // 期限切れ削除後もサイズ上限を超える場合はDoS対策として一括クリア
+  if (rateLimitMap.size > RATE_LIMIT_MAP_MAX_SIZE) {
+    rateLimitMap.clear();
   }
 }
 
@@ -80,11 +83,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   }
 
+  const fromEmail =
+    process.env.RESEND_FROM_EMAIL ??
+    (process.env.NODE_ENV !== "production"
+      ? "CITechBloom <noreply@citechbloom.example.com>"
+      : undefined);
+
+  if (!fromEmail) {
+    return NextResponse.json(
+      { error: "Server configuration error" },
+      { status: 500 }
+    );
+  }
+
   const { Resend } = await import("resend");
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   const { error } = await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL ?? "CITechBloom <noreply@citechbloom.example.com>",
+    from: fromEmail,
     to: email,
     subject: "【CITechBloom】入会申請を受け付けました",
     html: `
