@@ -16,20 +16,20 @@ type Petal = {
   color: string;
 };
 
-const COLORS = ["#ffb7c5", "#ff9ab2", "#ffc8d5", "#fff0f5"];
-const PETAL_COUNT = 25;
+const COLORS = ["#ffb7c5", "#ff9ab2", "#ffc8d5", "#fff0f5", "#ffd6e0"];
+const PETAL_COUNT = 55;
 
 function createPetal(id: number): Petal {
   return {
     id,
     left: Math.random() * 100,
-    size: 10 + Math.random() * 12,
+    size: 10 + Math.random() * 16,
     duration: 8 + Math.random() * 10,
     delay: Math.random() * -18,
     drift: -30 + Math.random() * 60,
     swayDuration: 3 + Math.random() * 2,
     spinDuration: 4 + Math.random() * 4,
-    opacity: 0.5 + Math.random() * 0.35,
+    opacity: 0.55 + Math.random() * 0.4,
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
   };
 }
