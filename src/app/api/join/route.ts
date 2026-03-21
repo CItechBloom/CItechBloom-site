@@ -12,6 +12,7 @@ function escapeHtml(str: string): string {
 }
 
 // 簡易レートリミット（IP別、1分間に5回まで）
+// ベストエフォート: インメモリのためサーバレス/複数インスタンス間では共有されない
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 5;
@@ -68,8 +69,14 @@ export async function POST(request: Request) {
   const department = escapeHtml(parsed.data.department);
   const message = parsed.data.message ? escapeHtml(parsed.data.message) : "";
 
-  // RESEND_API_KEY が未設定の場合は送信をスキップ（開発環境向け）
   if (!process.env.RESEND_API_KEY) {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+    // 開発環境ではメール送信をスキップ
     return NextResponse.json({ success: true });
   }
 

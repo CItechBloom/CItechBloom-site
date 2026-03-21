@@ -58,6 +58,7 @@ export function SakuraBackground() {
       className="fixed inset-0 -z-10 pointer-events-none overflow-hidden"
       aria-hidden="true"
     >
+      {/* fall(落下) → sway(横揺れ) → spin(回転) を別要素に分離し、transform上書きを防止 */}
       {petals.map((petal) => (
         <div
           key={petal.id}
@@ -65,17 +66,22 @@ export function SakuraBackground() {
           style={{
             left: `${petal.left}%`,
             opacity: petal.opacity,
-            // CSS変数で花びらごとのdriftを渡す
             "--petal-drift": `${petal.drift}px`,
             animation: `fall ${petal.duration}s linear ${petal.delay}s infinite`,
           } as React.CSSProperties}
         >
           <div
             style={{
-              animation: `sway ${petal.swayDuration}s ease-in-out ${petal.delay}s infinite alternate, spin ${petal.spinDuration}s linear ${petal.delay}s infinite`,
+              animation: `sway ${petal.swayDuration}s ease-in-out ${petal.delay}s infinite alternate`,
             }}
           >
-            <PetalSvg color={petal.color} size={petal.size} />
+            <div
+              style={{
+                animation: `spin ${petal.spinDuration}s linear ${petal.delay}s infinite`,
+              }}
+            >
+              <PetalSvg color={petal.color} size={petal.size} />
+            </div>
           </div>
         </div>
       ))}
