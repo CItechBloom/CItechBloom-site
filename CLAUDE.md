@@ -120,7 +120,7 @@ docker compose exec app npm install -D <package>  # devDependencies
 
 ### 概要
 
-Next.js 14 (App Router) ベースの学生団体向けWebサイト:
+Next.js 16 (App Router) ベースの学生団体向けWebサイト:
 
 - **静的生成中心 (SSG)**: コンテンツはビルド時に生成、パフォーマンス優先
 - **MDXブログ**: Contentlayerでマークダウン記事を型安全に管理

@@ -2,6 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { ReactNode } from "react";
 import { useId, useState } from "react";
 import { JoinFormSchema, type JoinFormData } from "@/lib/validations";
 import { Button } from "@/components/ui/Button";
@@ -15,7 +16,7 @@ type FieldProps = {
   error?: string;
   errorId?: string;
   required?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 function Field({ label, htmlFor, error, errorId, required, children }: FieldProps) {

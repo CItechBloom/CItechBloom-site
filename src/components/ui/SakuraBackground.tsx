@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useMemo } from "react";
 
 type Petal = {
@@ -66,7 +67,7 @@ export function SakuraBackground() {
             opacity: petal.opacity,
             "--petal-drift": `${petal.drift}px`,
             animation: `fall ${petal.duration}s linear ${petal.delay}s infinite`,
-          } as React.CSSProperties}
+          } as CSSProperties}
         >
           <div
             style={{
