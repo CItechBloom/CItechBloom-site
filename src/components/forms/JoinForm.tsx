@@ -76,7 +76,7 @@ export function JoinForm() {
       <div className="text-center py-12 px-6 bg-green/5 rounded-2xl border border-green/20">
         <p className="text-2xl font-bold text-green mb-2">申請を受け付けました！</p>
         <p className="text-foreground/70 text-sm">
-          確認メールをお送りしました。しばらくお待ちください。
+          内容を確認の上、ご連絡いたします。しばらくお待ちください。
         </p>
         <button
           onClick={() => setStatus("idle")}

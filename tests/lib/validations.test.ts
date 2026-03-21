@@ -31,6 +31,16 @@ describe("JoinFormSchema", () => {
     }
   });
 
+  it("nameが空白のみの場合エラー", () => {
+    const result = JoinFormSchema.safeParse({ ...validData, name: "   " });
+    expect(result.success).toBe(false);
+  });
+
+  it("departmentが空白のみの場合エラー", () => {
+    const result = JoinFormSchema.safeParse({ ...validData, department: "   " });
+    expect(result.success).toBe(false);
+  });
+
   it("不正なemailでエラー", () => {
     const result = JoinFormSchema.safeParse({ ...validData, email: "not-an-email" });
     expect(result.success).toBe(false);

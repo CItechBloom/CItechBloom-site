@@ -45,9 +45,12 @@ function isRateLimited(ip: string): boolean {
 export async function POST(request: Request) {
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "unknown";
+    request.headers.get("x-real-ip")?.trim() ??
+    null;
 
-  if (isRateLimited(ip)) {
+  // IPが特定できる場合のみレートリミットを適用
+  // （"unknown"共有バケットで全員ブロックされる問題を回避）
+  if (ip && isRateLimited(ip)) {
     return NextResponse.json(
       { error: "Too many requests" },
       { status: 429 }
