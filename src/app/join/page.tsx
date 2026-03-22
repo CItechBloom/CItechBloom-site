@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { JoinForm } from "@/components/forms/JoinForm";
+import { createClient } from "@/lib/supabase";
 
 export const metadata: Metadata = {
   title: "入会する",
@@ -7,7 +8,40 @@ export const metadata: Metadata = {
     "CITechBloomへの入会申請フォームです。学年・経験問わず、技術が好きな方を歓迎します。",
 };
 
-export default function JoinPage() {
+const STAT_LABELS: Record<string, string> = {
+  member_count: "メンバー数",
+  years_active: "活動年数",
+  hackathon_count: "ハッカソン参加",
+};
+
+const FALLBACK_STATS = [
+  { label: "メンバー数", value: "30+" },
+  { label: "活動年数", value: "3年" },
+  { label: "ハッカソン参加", value: "10+" },
+];
+
+async function getStats() {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("site_stats")
+      .select("key, value")
+      .in("key", ["member_count", "years_active", "hackathon_count"]);
+
+    if (error || !data || data.length === 0) return FALLBACK_STATS;
+
+    return data.map((stat) => ({
+      label: STAT_LABELS[stat.key] ?? stat.key,
+      value: stat.value,
+    }));
+  } catch {
+    return FALLBACK_STATS;
+  }
+}
+
+export default async function JoinPage() {
+  const stats = await getStats();
+
   return (
     <div className="py-12 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto">
@@ -27,11 +61,7 @@ export default function JoinPage() {
         </div>
 
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-          {[
-            { label: "メンバー数", value: "30+" },
-            { label: "活動年数", value: "3年" },
-            { label: "ハッカソン参加", value: "10+" },
-          ].map(({ label, value }) => (
+          {stats.map(({ label, value }) => (
             <div
               key={label}
               className="bg-white/60 rounded-xl p-4 border border-white/60"
