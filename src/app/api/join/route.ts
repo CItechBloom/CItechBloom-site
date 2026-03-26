@@ -1,5 +1,54 @@
 import { NextResponse } from "next/server";
 import { JoinFormSchema } from "@/lib/validations";
+import { z } from "zod";
+
+// 両方の環境変数が揃っている場合のみ Turnstile を有効化
+// （片方だけ設定されるとフォームが停止するため）
+function isTurnstileEnabled(): boolean {
+  return !!(
+    process.env.TURNSTILE_SECRET_KEY &&
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  );
+}
+
+type TurnstileResult =
+  | { status: "ok" }
+  | { status: "rejected" }
+  | { status: "error"; message: string };
+
+const TURNSTILE_TIMEOUT_MS = 5_000;
+
+async function verifyTurnstileToken(token: string): Promise<TurnstileResult> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      TURNSTILE_TIMEOUT_MS
+    );
+
+    const res = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          secret: process.env.TURNSTILE_SECRET_KEY,
+          response: token,
+        }),
+        signal: controller.signal,
+      }
+    );
+    clearTimeout(timeoutId);
+
+    const data = (await res.json()) as { success: boolean };
+    return data.success ? { status: "ok" } : { status: "rejected" };
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Turnstile verification failed";
+    console.error("[Turnstile] verification error:", message);
+    return { status: "error", message };
+  }
+}
 
 // HTMLインジェクション防止
 function escapeHtml(str: string): string {
@@ -71,6 +120,29 @@ export async function POST(request: Request) {
   const parsed = JoinFormSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+  }
+
+  // Turnstile トークン検証（両方の環境変数が設定されている場合のみ有効）
+  if (isTurnstileEnabled()) {
+    const tokenField = z.string().min(1).safeParse(
+      (body as Record<string, unknown>).turnstileToken
+    );
+    if (!tokenField.success) {
+      return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+    }
+    const result = await verifyTurnstileToken(tokenField.data);
+    if (result.status === "rejected") {
+      return NextResponse.json(
+        { error: "Bot verification failed" },
+        { status: 400 }
+      );
+    }
+    if (result.status === "error") {
+      return NextResponse.json(
+        { error: "Verification service unavailable" },
+        { status: 503 }
+      );
+    }
   }
 
   const name = escapeHtml(parsed.data.name);

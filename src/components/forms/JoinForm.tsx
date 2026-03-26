@@ -3,8 +3,9 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactNode } from "react";
-import { useId, useState } from "react";
+import { useId, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { JoinFormSchema, type JoinFormData } from "@/lib/validations";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -40,10 +41,17 @@ function Field({ label, htmlFor, error, errorId, required, children }: FieldProp
 const inputClass =
   "w-full rounded-xl border border-black/15 bg-white px-4 py-2.5 text-sm text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold transition-colors duration-200";
 
+const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
 export function JoinForm() {
   const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
   const router = useRouter();
   const id = useId();
+
+  const handleTurnstileSuccess = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
 
   const fieldId = (name: string) => `${id}-${name}`;
   const errorId = (name: string) => `${id}-${name}-error`;
@@ -63,7 +71,10 @@ export function JoinForm() {
       const res = await fetch("/api/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          ...(turnstileSiteKey && { turnstileToken }),
+        }),
       });
       if (!res.ok) throw new Error("Failed");
       reset();
@@ -142,6 +153,16 @@ export function JoinForm() {
         />
       </Field>
 
+      {turnstileSiteKey && (
+        <div className="flex justify-center">
+          <Turnstile
+            siteKey={turnstileSiteKey}
+            onSuccess={handleTurnstileSuccess}
+            onExpire={() => setTurnstileToken("")}
+          />
+        </div>
+      )}
+
       {status === "error" && (
         <p role="alert" className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl">
           送信に失敗しました。しばらくしてから再度お試しください。
@@ -150,7 +171,7 @@ export function JoinForm() {
 
       <Button
         type="submit"
-        disabled={status === "submitting"}
+        disabled={status === "submitting" || (!!turnstileSiteKey && !turnstileToken)}
         size="lg"
         className="w-full"
       >
