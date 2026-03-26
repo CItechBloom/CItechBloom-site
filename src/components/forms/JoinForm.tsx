@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactNode } from "react";
 import { useId, useState } from "react";
+import { useRouter } from "next/navigation";
 import { JoinFormSchema, type JoinFormData } from "@/lib/validations";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -40,7 +41,8 @@ const inputClass =
   "w-full rounded-xl border border-black/15 bg-white px-4 py-2.5 text-sm text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold transition-colors duration-200";
 
 export function JoinForm() {
-  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
+  const router = useRouter();
   const id = useId();
 
   const fieldId = (name: string) => `${id}-${name}`;
@@ -64,29 +66,12 @@ export function JoinForm() {
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Failed");
-      setStatus("success");
       reset();
+      router.push(`/join/welcome?name=${encodeURIComponent(data.name)}`);
     } catch {
       setStatus("error");
     }
   };
-
-  if (status === "success") {
-    return (
-      <div className="text-center py-12 px-6 bg-green/5 rounded-2xl border border-green/20">
-        <p className="text-2xl font-bold text-green mb-2">申請を受け付けました！</p>
-        <p className="text-foreground/70 text-sm">
-          内容を確認の上、ご連絡いたします。しばらくお待ちください。
-        </p>
-        <button
-          onClick={() => setStatus("idle")}
-          className="mt-6 text-sm text-gold hover:underline"
-        >
-          もう一度送信する
-        </button>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
