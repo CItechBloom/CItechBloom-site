@@ -15,3 +15,19 @@ export const JoinFormSchema = z.object({
 });
 
 export type JoinFormData = z.infer<typeof JoinFormSchema>;
+
+export const MemberFormSchema = z.object({
+  name: z.string().trim().min(1, { message: "名前を入力してください" }),
+  role: z.string().trim().min(1, { message: "役割を入力してください" }),
+  bio: z
+    .string()
+    .trim()
+    .min(1, { message: "自己紹介を入力してください" })
+    .max(300, { message: "300文字以内で入力してください" }),
+  year: z.string().min(1, { message: "学年を選択してください" }),
+  department: z.string().trim().optional(),
+  display_order: z.number().int().min(0),
+  is_visible: z.boolean(),
+});
+
+export type MemberFormData = z.infer<typeof MemberFormSchema>;
