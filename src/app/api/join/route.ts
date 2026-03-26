@@ -12,7 +12,11 @@ function escapeHtml(str: string): string {
 }
 
 // 簡易レートリミット（IP別、1分間に5回まで）
-// ベストエフォート: インメモリのためサーバレス/複数インスタンス間では共有されない
+// LIMITATION: インメモリのためサーバレス/複数インスタンス間では共有されない。
+// 再起動やスケールアウトでリセットされる。本番環境の強化策:
+// 1. Cloudflare Turnstile / hCaptcha をフォームに追加（推奨）
+// 2. Upstash Redis 等の分散レート制限に置き換え
+// 3. Vercel Firewall / Cloudflare WAF でのレート制限
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 5;

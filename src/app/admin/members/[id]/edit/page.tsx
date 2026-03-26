@@ -1,57 +1,34 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { createBrowserClient } from "@supabase/ssr";
+import { getMember } from "@/app/admin/_actions/members";
 import { MemberForm } from "@/app/admin/members/_components/MemberForm";
-import type { MemberFormData } from "@/lib/validations";
 
-export default function EditMemberPage() {
-  const params = useParams<{ id: string }>();
-  const [initialData, setInitialData] = useState<(MemberFormData & { image_url?: string }) | null>(null);
-  const [loading, setLoading] = useState(true);
+type Props = {
+  params: Promise<{ id: string }>;
+};
 
-  useEffect(() => {
-    async function load() {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-      const { data } = await supabase
-        .from("members")
-        .select("*")
-        .eq("id", params.id)
-        .single();
+export default async function EditMemberPage({ params }: Props) {
+  const { id } = await params;
+  const result = await getMember(id);
 
-      if (data) {
-        setInitialData({
-          name: data.name as string,
-          role: data.role as string,
-          bio: data.bio as string,
-          year: data.year as string,
-          department: (data.department as string) ?? "",
-          display_order: data.display_order as number,
-          is_visible: data.is_visible as boolean,
-          image_url: (data.image_url as string) ?? undefined,
-        });
-      }
-      setLoading(false);
-    }
-    load();
-  }, [params.id]);
-
-  if (loading) {
-    return <p className="text-foreground/60 text-sm">読み込み中...</p>;
+  if (!result.success) {
+    return <p className="text-red-600 text-sm">{result.error}</p>;
   }
 
-  if (!initialData) {
-    return <p className="text-red-600 text-sm">メンバーが見つかりませんでした。</p>;
-  }
+  const data = result.data;
+  const initialData = {
+    name: data.name,
+    role: data.role,
+    bio: data.bio,
+    year: data.year,
+    department: data.department ?? "",
+    display_order: data.display_order,
+    is_visible: data.is_visible,
+    image_url: data.image_url ?? undefined,
+  };
 
   return (
     <div>
       <h2 className="text-xl font-bold text-foreground mb-6">メンバー編集</h2>
-      <MemberForm memberId={params.id} initialData={initialData} />
+      <MemberForm memberId={id} initialData={initialData} />
     </div>
   );
 }

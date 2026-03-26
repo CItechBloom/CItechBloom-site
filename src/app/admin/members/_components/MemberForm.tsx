@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { createBrowserClient } from "@supabase/ssr";
 import { MemberFormSchema, type MemberFormData } from "@/lib/validations";
+import { createMember, updateMember } from "@/app/admin/_actions/members";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
@@ -24,11 +24,6 @@ export function MemberForm({ memberId, initialData }: Props) {
   );
   const [error, setError] = useState("");
   const router = useRouter();
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   const {
     register,
@@ -65,58 +60,27 @@ export function MemberForm({ memberId, initialData }: Props) {
     setSaving(true);
     setError("");
 
-    let imageUrl = initialData?.image_url ?? null;
+    const formData = new FormData();
+    formData.set("name", data.name);
+    formData.set("role", data.role);
+    formData.set("bio", data.bio);
+    formData.set("year", data.year);
+    formData.set("department", data.department ?? "");
+    formData.set("display_order", String(data.display_order));
+    formData.set("is_visible", String(data.is_visible));
 
-    // 画像アップロード
     if (imageFile) {
-      const ext = imageFile.name.split(".").pop();
-      const fileName = `${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("member-photos")
-        .upload(fileName, imageFile);
-
-      if (uploadError) {
-        setError("画像のアップロードに失敗しました");
-        setSaving(false);
-        return;
-      }
-
-      const { data: urlData } = supabase.storage
-        .from("member-photos")
-        .getPublicUrl(fileName);
-      imageUrl = urlData.publicUrl;
+      formData.set("image", imageFile);
     }
 
-    const memberData = {
-      name: data.name,
-      role: data.role,
-      bio: data.bio,
-      year: data.year,
-      department: data.department || null,
-      display_order: data.display_order,
-      is_visible: data.is_visible,
-      image_url: imageUrl,
-    };
+    const result = memberId
+      ? await updateMember(memberId, formData)
+      : await createMember(formData);
 
-    if (memberId) {
-      const { error: updateError } = await supabase
-        .from("members")
-        .update(memberData)
-        .eq("id", memberId);
-      if (updateError) {
-        setError("更新に失敗しました");
-        setSaving(false);
-        return;
-      }
-    } else {
-      const { error: insertError } = await supabase
-        .from("members")
-        .insert(memberData);
-      if (insertError) {
-        setError("登録に失敗しました");
-        setSaving(false);
-        return;
-      }
+    if (!result.success) {
+      setError(result.error);
+      setSaving(false);
+      return;
     }
 
     router.push("/admin/members");
