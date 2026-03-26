@@ -39,6 +39,7 @@ const validData = {
 describe("POST /api/join", () => {
   beforeEach(() => {
     vi.resetModules();
+    vi.unstubAllEnvs();
   });
 
   it("不正なJSONで400を返す", async () => {
@@ -57,8 +58,66 @@ describe("POST /api/join", () => {
     expect(res.status).toBe(400);
   });
 
-  it("有効なデータでsuccessを返す", async () => {
+  it("有効なデータでsuccessを返す（Turnstile未設定時）", async () => {
+    delete process.env.TURNSTILE_SECRET_KEY;
     const res = await callPOST(validData);
     expect(res.status).toBe(200);
+  });
+
+  describe("Turnstile 有効時", () => {
+    beforeEach(() => {
+      vi.stubEnv("TURNSTILE_SECRET_KEY", "test-secret");
+      // Turnstile API をモック
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockImplementation((url: string) => {
+          if (
+            typeof url === "string" &&
+            url.includes("challenges.cloudflare.com")
+          ) {
+            return Promise.resolve({
+              json: () => Promise.resolve({ success: true }),
+            });
+          }
+          return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+        })
+      );
+    });
+
+    it("トークンなしで400を返す", async () => {
+      const res = await callPOST(validData);
+      expect(res.status).toBe(400);
+    });
+
+    it("有効なトークン付きでsuccessを返す", async () => {
+      const res = await callPOST({
+        ...validData,
+        turnstileToken: "valid-token",
+      });
+      expect(res.status).toBe(200);
+    });
+
+    it("無効なトークンで400を返す", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockImplementation((url: string) => {
+          if (
+            typeof url === "string" &&
+            url.includes("challenges.cloudflare.com")
+          ) {
+            return Promise.resolve({
+              json: () => Promise.resolve({ success: false }),
+            });
+          }
+          return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+        })
+      );
+
+      const res = await callPOST({
+        ...validData,
+        turnstileToken: "invalid-token",
+      });
+      expect(res.status).toBe(400);
+    });
   });
 });

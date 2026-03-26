@@ -1,5 +1,26 @@
 import { NextResponse } from "next/server";
 import { JoinFormSchema } from "@/lib/validations";
+import { z } from "zod";
+
+async function verifyTurnstileToken(token: string): Promise<boolean> {
+  try {
+    const res = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          secret: process.env.TURNSTILE_SECRET_KEY,
+          response: token,
+        }),
+      }
+    );
+    const data = (await res.json()) as { success: boolean };
+    return data.success === true;
+  } catch {
+    return false;
+  }
+}
 
 // HTMLインジェクション防止
 function escapeHtml(str: string): string {
@@ -71,6 +92,23 @@ export async function POST(request: Request) {
   const parsed = JoinFormSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+  }
+
+  // Turnstile トークン検証（TURNSTILE_SECRET_KEY 設定時のみ有効）
+  if (process.env.TURNSTILE_SECRET_KEY) {
+    const tokenField = z.string().min(1).safeParse(
+      (body as Record<string, unknown>).turnstileToken
+    );
+    if (!tokenField.success) {
+      return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+    }
+    const tokenValid = await verifyTurnstileToken(tokenField.data);
+    if (!tokenValid) {
+      return NextResponse.json(
+        { error: "Bot verification failed" },
+        { status: 400 }
+      );
+    }
   }
 
   const name = escapeHtml(parsed.data.name);
