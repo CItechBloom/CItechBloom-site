@@ -1,6 +1,8 @@
 import { getMembers } from "@/app/admin/_actions/members";
 import { MemberList } from "./_components/MemberList";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminMembersPage() {
   const result = await getMembers();
 

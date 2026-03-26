@@ -1,6 +1,8 @@
 import { getAboutSections } from "@/app/admin/_actions/about";
 import { AboutEditor } from "./_components/AboutEditor";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminAboutPage() {
   const result = await getAboutSections();
 

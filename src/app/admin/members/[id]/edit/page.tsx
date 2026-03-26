@@ -1,6 +1,8 @@
 import { getMember } from "@/app/admin/_actions/members";
 import { MemberForm } from "@/app/admin/members/_components/MemberForm";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ id: string }>;
 };
