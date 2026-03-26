@@ -32,7 +32,11 @@ export default async function WelcomePage({ searchParams }: Props) {
   const { name } = await searchParams;
   const welcomeData = await getWelcomeData();
   const nextEvent = welcomeData.next_event_info;
-  const inviteUrl = welcomeData.community_invite_url;
+  // XSS防止: javascript: 等の不正プロトコルを排除し https:// のみ許可
+  const rawInviteUrl = welcomeData.community_invite_url;
+  const inviteUrl = rawInviteUrl?.startsWith("https://")
+    ? rawInviteUrl
+    : undefined;
 
   return (
     <div className="py-12 px-4 sm:px-6">

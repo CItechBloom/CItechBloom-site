@@ -31,3 +31,23 @@ export const MemberFormSchema = z.object({
 });
 
 export type MemberFormData = z.infer<typeof MemberFormSchema>;
+
+export const SafeUrlSchema = z
+  .string()
+  .trim()
+  .url({ message: "有効なURLを入力してください" })
+  .refine((url) => url.startsWith("https://"), {
+    message: "URLはhttps://で始まる必要があります",
+  });
+
+export const AboutContentSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, { message: "タイトルを入力してください" })
+    .max(200, { message: "200文字以内で入力してください" }),
+  body: z
+    .string()
+    .trim()
+    .max(5000, { message: "5000文字以内で入力してください" }),
+});
