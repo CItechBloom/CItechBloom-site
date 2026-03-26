@@ -66,7 +66,9 @@ describe("POST /api/join", () => {
 
   describe("Turnstile 有効時", () => {
     beforeEach(() => {
+      // 両方の環境変数が必要
       vi.stubEnv("TURNSTILE_SECRET_KEY", "test-secret");
+      vi.stubEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY", "test-site-key");
       // Turnstile API をモック
       vi.stubGlobal(
         "fetch",
@@ -118,6 +120,33 @@ describe("POST /api/join", () => {
         turnstileToken: "invalid-token",
       });
       expect(res.status).toBe(400);
+    });
+
+    it("Turnstile 障害時は503を返す", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockImplementation((url: string) => {
+          if (
+            typeof url === "string" &&
+            url.includes("challenges.cloudflare.com")
+          ) {
+            return Promise.reject(new Error("Network error"));
+          }
+          return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+        })
+      );
+
+      const res = await callPOST({
+        ...validData,
+        turnstileToken: "valid-token",
+      });
+      expect(res.status).toBe(503);
+    });
+
+    it("SECRET_KEYだけ設定でSITE_KEYなしの場合はTurnstile無効", async () => {
+      delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+      const res = await callPOST(validData);
+      expect(res.status).toBe(200);
     });
   });
 });
